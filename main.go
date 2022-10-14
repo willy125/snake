@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/gdamore/tcell@v1.4.0"
+	"github.com/gdamore/tcell"
 )
 
 const SnakeSymbol = 0x2588
@@ -24,7 +24,7 @@ var screen tcell.Screen
 var isGamePaused bool
 var debugLog string
 
-var GameObjects []*GameObject
+var gameObjects []*GameObject
 
 func main() {
 	InitScreen()
@@ -39,6 +39,44 @@ func main() {
 	}
 	screen.Fini()
 
+}
+func PrintStringCentered(row, col int, str string) {
+	col = col - len(str)/2
+	PrintString(row, col, str)
+}
+func PrintString(row, col int, str string) {
+	for _, c := range str {
+		PrintFilledRect(row, col, 1, 1, c)
+		col += 1
+	}
+}
+func PrintFilledRect(row, col, width, height int, ch rune) {
+	for r := 0; r < height; r++ {
+		for c := 0; c < width; c++ {
+			screen.SetContent(col+c, row+r, ch, nil, tcell.StyleDefault)
+		}
+	}
+
+}
+func UpdateState() {
+	if isGamePaused {
+		return
+	}
+	for i := range gameObjects {
+		gameObjects[i].row += gameObjects[i].velRow
+		gameObjects[i].col += gameObjects[i].velCol
+	}
+}
+func DrawState() {
+	if isGamePaused {
+		return
+	}
+	screen.Clear()
+	PrintString(0, 0, debugLog)
+	for _, obj := range gameObjects {
+		PrintFilledRect(obj.row, obj.col, obj.width, obj.height, obj.symbol)
+	}
+	screen.Show()
 }
 func ReadInput(inputChan chan string) string {
 	var key string
