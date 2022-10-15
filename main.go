@@ -90,7 +90,16 @@ func UpdateState() {
 	if isGamePaused {
 		return
 	}
+	UpdateSnake()
 	//Update Snake + Apple
+}
+func UpdateSnake() {
+	head := snake.parts[len(snake.parts)-1]
+	snake.parts = append(snake.parts, &Point{
+		row: head.row + snake.VelRow,
+		col: head.col + snake.VelCol,
+	})
+	snake.parts = snake.parts[1:]
 }
 
 func DrawState() {
