@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"time"
 
@@ -19,7 +20,7 @@ type Point struct {
 }
 type Snake struct {
 	parts          []*Point
-	VelRow, VelCol int
+	velRow, velCol int
 	symbol         rune
 }
 type Apple struct {
@@ -30,20 +31,28 @@ type Apple struct {
 var screen tcell.Screen
 var snake *Snake
 var apple *Apple
+var score int
+var isGameOver bool
 var isGamePaused bool
 var debugLog string
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 	InitScreen()
 	InitGameState()
 	inputChan := InitUserInput()
 
-	for {
+	for !isGameOver {
 		HandleUserInput(ReadInput(inputChan))
 		UpdateState()
 		DrawState()
 		time.Sleep(75 * time.Millisecond)
 	}
+	screenWidth, screenHeight := screen.Size()
+	PrintStringCentered(screenHeight/2, screenWidth/2, "Game Over!")
+	PrintStringCentered(screenHeight/2+1, screenWidth/2, fmt.Sprintf("Your score is %d...", score))
+	screen.Show()
+	time.Sleep(3 * time.Second)
 	screen.Fini()
 
 }
@@ -91,17 +100,47 @@ func UpdateState() {
 		return
 	}
 	UpdateSnake()
+	UpdateApple()
 	//Update Snake + Apple
 }
 func UpdateSnake() {
 	head := snake.parts[len(snake.parts)-1]
 	snake.parts = append(snake.parts, &Point{
-		row: head.row + snake.VelRow,
-		col: head.col + snake.VelCol,
+		row: head.row + snake.velRow,
+		col: head.col + snake.velCol,
 	})
-	snake.parts = snake.parts[1:]
-}
+	if !AppleIsInsideSnake() { // if the apple is inside the snake, the snake will skip adding a col
+		snake.parts = snake.parts[1:]
+	} else {
+		score++
+	}
+	if IsSnakeHittingWall() {
+		isGameOver = true
+	}
 
+}
+func IsSnakeHittingWall() bool {
+	head := snake.parts[len(snake.parts)-1]
+	return head.row < 0 ||
+		head.row >= GameFrameHeight ||
+		head.col < 0 ||
+		head.col >= GameFrameWidth
+}
+func UpdateApple() {
+	//do this while the apple is inside the snake
+	for AppleIsInsideSnake() {
+		apple.point.row, apple.point.col =
+			rand.Intn(GameFrameHeight), rand.Intn(GameFrameWidth)
+	}
+}
+func AppleIsInsideSnake() bool { //method generated to garante than the apple will always be generated outside de snake
+	for _, p := range snake.parts {
+		if p.row == apple.point.row && p.col == apple.point.col {
+			return true
+		}
+	}
+	return false
+}
 func DrawState() {
 	if isGamePaused {
 		return
@@ -144,18 +183,20 @@ func HandleUserInput(key string) {
 	if key == "Rune[q]" {
 		screen.Fini()
 		os.Exit(0)
-	} else if key == "Rune[w]" {
-		snake.VelRow = -1
-		snake.VelCol = 0
-	} else if key == "Rune[a]" {
-		snake.VelRow = 0
-		snake.VelCol = -1
-	} else if key == "Rune[s]" {
-		snake.VelRow = 1
-		snake.VelCol = 0
-	} else if key == "Rune[d]" {
-		snake.VelRow = 0
-		snake.VelCol = 1
+	} else if key == "Rune[p]" {
+		isGamePaused = true
+	} else if key == "Rune[w]" && snake.velRow != 1 { // && snake.velRow != 1 para que no se mueva hacia abajo cuando este velRow !=1
+		snake.velRow = -1
+		snake.velCol = 0
+	} else if key == "Rune[a]" && snake.velCol != 1 {
+		snake.velRow = 0
+		snake.velCol = -1
+	} else if key == "Rune[s]" && snake.velRow != -1 {
+		snake.velRow = 1
+		snake.velCol = 0
+	} else if key == "Rune[d]" && snake.velCol != -1 {
+		snake.velRow = 0
+		snake.velCol = 1
 	}
 }
 func InitGameState() {
@@ -167,8 +208,8 @@ func InitGameState() {
 			{row: 6, col: 3},
 			{row: 5, col: 3},
 		},
-		VelRow: -1,
-		VelCol: 0,
+		velRow: -1,
+		velCol: 0,
 		symbol: SnakeSymbol,
 	}
 	apple = &Apple{
