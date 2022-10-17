@@ -144,16 +144,28 @@ func HandleUserInput(key string) {
 	if key == "Rune[q]" {
 		screen.Fini()
 		os.Exit(0)
+	} else if key == "Rune[w]" {
+		snake.VelRow = -1
+		snake.VelCol = 0
+	} else if key == "Rune[a]" {
+		snake.VelRow = 0
+		snake.VelCol = -1
+	} else if key == "Rune[s]" {
+		snake.VelRow = 1
+		snake.VelCol = 0
+	} else if key == "Rune[d]" {
+		snake.VelRow = 0
+		snake.VelCol = 1
 	}
 }
 func InitGameState() {
 	snake = &Snake{
 		parts: []*Point{
-			{row: 5, col: 3}, //&Point{row: 5, col: 3},
-			{row: 6, col: 3},
-			{row: 7, col: 3},
+			{row: 9, col: 3}, //&Point{row: 5, col: 3},
 			{row: 8, col: 3},
-			{row: 9, col: 3},
+			{row: 7, col: 3},
+			{row: 6, col: 3},
+			{row: 5, col: 3},
 		},
 		VelRow: -1,
 		VelCol: 0,
