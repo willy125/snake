@@ -32,6 +32,7 @@ var screen tcell.Screen
 var snake *Snake
 var apple *Apple
 var score int
+var pointsToClear []*Point //with this variable we delete only the points drawn by the snake and the appple, we get rid of the clear.Screen() function
 var isGameOver bool
 var isGamePaused bool
 var debugLog string
@@ -56,6 +57,17 @@ func main() {
 	screen.Fini()
 
 }
+func DrawSnake() {
+	for _, p := range snake.parts {
+		PrintFilledRectInGameFrame(p.row, p.col, 1, 1, snake.symbol)
+		pointsToClear = append(pointsToClear, p)
+	}
+}
+func DrawApple() {
+	PrintFilledRectInGameFrame(apple.point.row, apple.point.col, 1, 1, apple.symbol)
+	pointsToClear = append(pointsToClear, apple.point)
+}
+
 func PrintStringCentered(row, col int, str string) {
 	col = col - len(str)/2
 	PrintString(row, col, str)
@@ -166,11 +178,15 @@ func DrawState() {
 	if isGamePaused {
 		return
 	}
-	screen.Clear()
+	for _, p := range pointsToClear {
+		PrintFilledRectInGameFrame(p.row, p.col, 1, 1, ' ')
+	}
+	//screen.Clear()
 	PrintString(0, 0, debugLog)
 	PrintGameFrame()
-	PrintSnake()
-	PrintApple()
+	pointsToClear = []*Point{}
+	DrawSnake()
+	DrawApple()
 	screen.Show()
 }
 func ReadInput(inputChan chan string) string {
@@ -192,14 +208,7 @@ func PrintGameFrame() {
 	//PrintUnFilledRect(row+1, col+1, GameFrameWidth, GameFrameHeight, '═') //code 205
 
 }
-func PrintSnake() {
-	for _, p := range snake.parts {
-		PrintFilledRectInGameFrame(p.row, p.col, 1, 1, snake.symbol)
-	}
-}
-func PrintApple() {
-	PrintFilledRectInGameFrame(apple.point.row, apple.point.col, 1, 1, apple.symbol)
-}
+
 func HandleUserInput(key string) {
 	if key == "Rune[q]" {
 		screen.Fini()
