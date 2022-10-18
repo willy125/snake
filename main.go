@@ -104,7 +104,7 @@ func UpdateState() {
 	//Update Snake + Apple
 }
 func UpdateSnake() {
-	head := snake.parts[len(snake.parts)-1]
+	head := GetSnakeHead()
 	snake.parts = append(snake.parts, &Point{
 		row: head.row + snake.velRow,
 		col: head.col + snake.velCol,
@@ -114,17 +114,38 @@ func UpdateSnake() {
 	} else {
 		score++
 	}
-	if IsSnakeHittingWall() {
+	if IsSnakeHittingWall() || IsSnakeEatingItself() {
 		isGameOver = true
 	}
 
 }
 func IsSnakeHittingWall() bool {
-	head := snake.parts[len(snake.parts)-1]
+	head := GetSnakeHead()
 	return head.row < 0 ||
 		head.row >= GameFrameHeight ||
 		head.col < 0 ||
 		head.col >= GameFrameWidth
+}
+func IsSnakeEatingItself() bool {
+	head := GetSnakeHead()
+	for _, p := range snake.parts[:GetSnakeHeadIndex()] {
+		/*
+			this is another way of doing it, we just need to remplace _ for i and then just user for i, p := range snake.parts
+			if i == len(snake.parts)-1 {
+				continue
+			}*/
+		if p.row == head.row && p.col == head.col {
+			return true
+		}
+	}
+	return false
+}
+func GetSnakeHeadIndex() int {
+	return len(snake.parts) - 1
+}
+func GetSnakeHead() *Point {
+	return snake.parts[len(snake.parts)-1]
+
 }
 func UpdateApple() {
 	//do this while the apple is inside the snake
